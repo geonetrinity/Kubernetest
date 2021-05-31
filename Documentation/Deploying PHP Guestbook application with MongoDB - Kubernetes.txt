@@ -1,0 +1,70 @@
+Deploying PHP Guestbook application with MongoDB
+
+Objectives
+Start up a Mongo database.
+Start up the guestbook frontend.
+Expose and view the Frontend Service.
+Clean up.
+
+--Start up a Mongo database.
+# kubectl apply -f https://k8s.io/examples/application/guestbook/mongo-deployment.yaml
+# kubectl apply -f mongo-deployment.yaml
+# kubectl get pods
+# kubectl logs -f deployment/mongo
+
+
+--Creating the MongoDB Service
+
+Apply the MongoDB Service from the following mongo-service.yaml file:
+
+# kubectl apply -f https://k8s.io/examples/application/guestbook/mongo-service.yaml
+# kubectl apply -f mongo-service.yaml
+
+Query the list of Services to verify that the MongoDB Service is running:
+
+# kubectl get service
+
+Set up and Expose the Guestbook Frontend
+
+Apply the frontend Deployment from the frontend-deployment.yaml file:
+
+# kubectl apply -f https://k8s.io/examples/application/guestbook/frontend-deployment.yaml
+# kubectl apply -f frontend-deployment.yaml
+
+Query the list of Pods to verify that the three frontend replicas are running:
+
+# kubectl get pods -l app.kubernetes.io/name=guestbook -l app.kubernetes.io/component=frontend
+# kubectl get pods
+
+Creating the Frontend Service
+
+Apply the frontend Service from the frontend-service.yaml file:
+
+# kubectl apply -f https://k8s.io/examples/application/guestbook/frontend-service.yaml
+# kubectl apply -f frontend-service.yaml
+# kubectl get services
+
+Viewing the Frontend Service via kubectl port-forward 
+
+# kubectl port-forward svc/frontend 8080:80
+
+Viewing the Frontend Service via LoadBalancer
+
+# kubectl get service frontend
+
+Scale
+
+# kubectl scale deployment frontend --replicas=3
+# kubectl get pods
+# kubectl scale deployment frontend --replicas=2
+# kubectl get pods
+
+
+Cleaning up
+
+# kubectl delete deployment -l app.kubernetes.io/name=mongo
+# kubectl delete service -l app.kubernetes.io/name=mongo
+# kubectl delete deployment -l app.kubernetes.io/name=guestbook
+# kubectl delete service -l app.kubernetes.io/name=guestbook
+# kubectl get pods
+# kubectl get configmap

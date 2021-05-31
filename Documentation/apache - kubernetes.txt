@@ -1,0 +1,59 @@
+Flat Apache Kubernetes
+
+apache_deployment.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apache-deployment
+  labels:
+    role: webserver
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      role: webserver
+  template:
+    metadata:
+      labels:
+        role: webserver
+    spec:
+      containers:
+      - name: frontend
+        image: httpd
+        ports:
+        - containerPort: 80
+
+
+# kubectl apply -f apache_deployment.yaml --record
+
+
+Performing Updates With Zero Downtime (Deployment Rolling Updates)
+
+# kubectl set image deployment apache-deployment frontend=httpd:2.4
+
+or 
+
+# kubectl edit deployment apache-deployment
+# kubectl rollout status deployment apache-deployment
+# kubectl describe deployments | grep Strategy
+
+Exposing IP
+# kubectl expose deployment apache-deployment --type=LoadBalancer --name=myapache-service
+# kubectl describe services myapache-service
+
+# kubectl rollout history deployment apache-deployment
+
+Rollback:
+# kubectl describe deployments | grep Image
+    Image:        nginx:1.7.9
+
+# kubectl rollout undo deployment apache-deployment
+deployment.apps/apache-deployment rolled back
+
+# kubectl describe deployments | grep Image
+    Image:        httpd:2.4
+
+Scaling And Autoscaling Deployments:
+# kubectl scale deployment apache-deployment --replicas=6
+# kubectl autoscale deployment apache-deployment --min=6 --max=10 --cpu-percent=70

@@ -1,0 +1,154 @@
+minikube version
+minikube start
+
+--Creating Cluster:
+kubectl cluster-info
+kubectl get nodes
+
+--Deploy you first app:
+kubectl version
+kubectl get nodes
+
+linus@DESKTOP-F9F9LB8:~/simplek8s$ kubectl get nodes
+NAME             STATUS   ROLES    AGE    VERSION
+docker-desktop   Ready    master   162m   v1.19.7
+
+# kubectl version
+Client Version: version.Info{Major:"1", Minor:"19", GitVersion:"v1.19.7", GitCommit:"1dd5338295409edcfff11505e7bb246f0d325d15", GitTreeState:"clean", BuildDate:"2021-01-13T13:23:52Z", GoVersion:"go1.15.5", Compiler:"gc", Platform:"linux/amd64"}
+Server Version: version.Info{Major:"1", Minor:"19", GitVersion:"v1.19.7", GitCommit:"1dd5338295409edcfff11505e7bb246f0d325d15", GitTreeState:"clean", BuildDate:"2021-01-13T13:15:20Z", GoVersion:"go1.15.5", Compiler:"gc", Platform:"linux/amd64"}
+
+# kubectl get nodes
+NAME             STATUS   ROLES    AGE    VERSION
+docker-desktop   Ready    master   162m   v1.19.7
+
+# kubectl create deployment kubernetes-bootcamp --image=gcr.io/google-samples/kubernetes-bootcamp:v1
+deployment.apps/kubernetes-bootcamp created
+
+# kubectl get deployments
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+kubernetes-bootcamp   1/1     1            1           24s
+
+
+--View the app:
+# echo -e "\n\n\n\e[92mStarting Proxy. After starting it will not output a response. Please click the first Terminal Tab\n"; kubectl proxy
+
+Starting Proxy. After starting it will not output a response. Please click the first Terminal Tab
+
+Starting to serve on 127.0.0.1:8001
+
+First we need to get the Pod name, and we'll store in the environment variable POD_NAME:
+
+
+# export POD_NAME=$(kubectl get pods -o go-template --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}')
+# echo Name of the Pod: $POD_NAME
+
+
+--Troubleshooting with kubectl
+In Module 2, you used Kubectl command-line interface. You'll continue to use it in Module 3 to get information about deployed applications and their environments. The most common operations can be done with the following kubectl commands:
+
+kubectl get - list resources
+kubectl describe - show detailed information about a resource
+kubectl logs - print the logs from a container in a pod
+kubectl exec - execute a command on a container in a pod
+
+
+# kubectl get pods
+# kubectl describe pods
+# kubectl logs $POD_NAME
+
+#  kubectl exec $POD_NAME -- env
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+HOSTNAME=kubernetes-bootcamp-57978f5f5d-c67tm
+KUBERNETES_SERVICE_HOST=10.96.0.1
+KUBERNETES_SERVICE_PORT=443
+KUBERNETES_SERVICE_PORT_HTTPS=443
+KUBERNETES_PORT=tcp://10.96.0.1:443
+KUBERNETES_PORT_443_TCP=tcp://10.96.0.1:443
+KUBERNETES_PORT_443_TCP_PROTO=tcp
+KUBERNETES_PORT_443_TCP_PORT=443
+KUBERNETES_PORT_443_TCP_ADDR=10.96.0.1
+NPM_CONFIG_LOGLEVEL=info
+NODE_VERSION=6.3.1
+HOME=/root
+
+# kubectl exec -it $POD_NAME -- bash
+
+
+--Using a Service to Expose Your App
+# kubectl get pods
+# kubectl get services
+# kubectl expose deployment/kubernetes-bootcamp --type="NodePort" --port 8080
+# kubectl get services
+# kubectl describe services/kubernetes-bootcamp
+# export NODE_PORT=$(kubectl get services/kubernetes-bootcamp -o go-template='{{(index .spec.ports 0).nodePort}}') ; echo NODE_PORT=$NODE_PORT
+
+# curl http://localhost:$NODE_PORT
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-57978f5f5d-c67tm | v=1
+
+
+--Scaling Your App
+# kubectl get deployments
+
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+kubernetes-bootcamp   1/1     1            1           29m
+
+To see the ReplicaSet created by the Deployment, run 
+# kubectl get rs
+
+let’s scale the Deployment to 4 replicas:
+# kubectl scale deployments/kubernetes-bootcamp --replicas=4
+# kubectl get deployments
+
+
+# kubectl get deployments
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+kubernetes-bootcamp   4/4     4            4           31m
+
+# kubectl get pods -o wide
+NAME                                   READY   STATUS    RESTARTS   AGE   IP          NODE             NOMINATED NODE   READINESS GATES
+kubernetes-bootcamp-57978f5f5d-7t2sb   1/1     Running   0          47s   10.1.0.21   docker-desktop   <none>           <none>
+kubernetes-bootcamp-57978f5f5d-88m75   1/1     Running   0          47s   10.1.0.22   docker-desktop   <none>           <none>
+kubernetes-bootcamp-57978f5f5d-8dhsn   1/1     Running   0          47s   10.1.0.20   docker-desktop   <none>           <none>
+kubernetes-bootcamp-57978f5f5d-c67tm   1/1     Running   0          31m   10.1.0.19   docker-desktop   <none>           <none>
+
+
+--Let’s check that the Service is load-balancing the traffic:
+# kubectl describe services/kubernetes-bootcamp
+# export NODE_PORT=$(kubectl get services/kubernetes-bootcamp -o go-template='{{(index .spec.ports 0).nodePort}}') ; echo NODE_PORT=$NODE_PORT
+
+--Scale Down
+# kubectl scale deployments/kubernetes-bootcamp --replicas=2
+# kubectl get deployments
+# kubectl get pods -o wide
+
+
+--Performing a Rolling Update
+# kubectl get deployments
+# kubectl get pods
+# kubectl describe pods
+# kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=jocatalin/kubernetes-bootcamp:v2
+
+# kubectl get pods
+NAME                                   READY   STATUS        RESTARTS   AGE
+kubernetes-bootcamp-57978f5f5d-8dhsn   1/1     Terminating   0          13m
+kubernetes-bootcamp-57978f5f5d-c67tm   1/1     Terminating   0          44m
+kubernetes-bootcamp-769746fd4-rmkfx    1/1     Running       0          13s
+kubernetes-bootcamp-769746fd4-v7zmj    1/1     Running       0          3s
+
+# kubectl describe services/kubernetes-bootcamp
+# export NODE_PORT=$(kubectl get services/kubernetes-bootcamp -o go-template='{{(index .spec.ports 0).nodePort}}') ; echo NODE_PORT=$NODE_PORT
+# curl localhost:$NODE_PORT -- run multiple times if you are seeing load balancing, v=2 shows the updates
+
+linus@DESKTOP-F9F9LB8:~$ curl localhost:$NODE_PORT
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-769746fd4-v7zmj | v=2
+
+# kubectl rollout status deployments/kubernetes-bootcamp
+deployment "kubernetes-bootcamp" successfully rolled out
+
+# kubectl describe pods
+
+--Update and Rollback:
+# kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=gcr.io/google-samples/kubernetes-bootcamp:v10 
+# kubectl get pods
+# kubectl describe pods
+# kubectl rollout undo deployments/kubernetes-bootcamp

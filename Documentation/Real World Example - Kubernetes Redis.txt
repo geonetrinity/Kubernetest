@@ -1,0 +1,45 @@
+Real World Example: Configuring Redis using a ConfigMap
+
+Configuring Redis using a ConfigMap
+This page provides a real world example of how to configure Redis using a ConfigMap and builds upon the Configure Containers Using a ConfigMap task.
+
+Objectives
+Create a ConfigMap with Redis configuration values
+Create a Redis Pod that mounts and uses the created ConfigMap
+Verify that the configuration was correctly applied.
+
+--Apply the ConfigMap created, along with a Redis pod manifest:
+
+file: example-redis-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-redis-config
+data:
+  redis-config: |
+    maxmemory 2mb
+    maxmemory-policy allkeys-lru    
+
+# kubectl apply -f example-redis-config.yaml
+# kubectl apply -f https://raw.githubusercontent.com/kubernetes/website/master/content/en/examples/pods/config/redis-pod.yaml
+
+or if the files are local:
+
+# kubectl apply -f example-redis-config.yaml
+# kubectl apply -f redis-pod.yaml
+# kubectl describe configmap/example-redis-config
+
+--Configmap Commands
+# kubectl get configmap
+# kubectl delete configmap/example-redis-config
+
+
+--Check the Redis Pod again using redis-cli via kubectl exec to see if the configuration
+
+# kubectl exec -it redis -- redis-cli
+127.0.0.1:6379> CONFIG GET maxmemory
+127.0.0.1:6379> CONFIG GET maxmemory-policy
+
+--Clean up your work by deleting the created resources:
+# kubectl delete pod/redis configmap/example-redis-config
+
