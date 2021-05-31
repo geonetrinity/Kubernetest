@@ -5,8 +5,11 @@ metadata:
   labels:
     app: wordpress
 spec:
+  type: NodePort
   ports:
-    - port: 80
+    - port: 8005      # this will be your custom port
+      targetPort: 80  # this is where the wordpress is listening
+      nodePort: 30001 # a port kubernetes to use to communicat between wordpress and customport
   selector:
     app: wordpress
     tier: frontend
