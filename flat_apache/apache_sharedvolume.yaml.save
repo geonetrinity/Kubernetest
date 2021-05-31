@@ -1,0 +1,29 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: apache-data-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: nfs
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: apache-data-pod
+spec:
+  volumes:
+    - name: apache-data-pv
+      persistentVolumeClaim:
+        claimName: apache-data-pvc
+  containers:
+    - name: inspector     image: bitnami/minideb
+      command:
+        - sleep
+        - infinity
+      volumeMounts:
+        - mountPath: "/data"
+          name: apache-data-pv
